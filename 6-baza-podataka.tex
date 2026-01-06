@@ -1,0 +1,50 @@
+\section{Baza podataka}
+Sembot trenutno koristi JSON datoteku (qa\_data.json) kao jednostavnu bazu podataka za pohranu pitanja i odgovora. Struktura datoteke je sljedeća:
+
+\begin{minted}[fontsize=\small, linenos, breaklines, frame=lines, bgcolor=gray!10]{json}
+{
+  "qa_pairs": [
+    {
+      "question": "Koji su rokovi za prijavu ispita?",
+      "answer": "Rokovi za prijavu ispita su najkasnije 3 dana prije termina ispita putem studomata."
+    },
+    {
+      "question": "Kada počinje akademska godina?",
+      "answer": "Za detaljni pregled svih važnih datuma i događaja akademske godine, pogledajte akademski kalendar na: https://www.unipu.hr/akademski_kalendar"
+    },
+    {
+      "question": "Koliko iznose ECTS bodovi za završetak studija?",
+      "answer": "Za završetak preddiplomskog studija potrebno je ostvariti 180 ECTS bodova, a za diplomski studij dodatnih 120 ECTS bodova."
+    },
+    {
+      "question": "Kako mogu kontaktirati studentsku službu?",
+      "answer": "Studentsku službu možete kontaktirati putem emaila ured-za-studente@unipu.hr ili telefonom na broj +385 52 377 000 radnim danom od 10-14h."
+    },
+    {
+      "question": "Koji su uvjeti za upis više godine?",
+      "answer": "Za upis više godine studija potrebno je ostvariti minimalno 50 ECTS bodova iz tekuće akademske godine."
+    },
+    ...
+  ]
+}
+\end{minted}
+
+\subsection{Prednosti i nedostaci JSON baze}
+
+\paragraph{Prednosti JSON baze}
+\begin{itemize}
+    \item \textbf{Jednostavnost:} JSON datoteke su lako čitljive i uređive, što olakšava dodavanje novih pitanja i odgovora.
+    \item \textbf{Brzina:} Mala veličina datoteke omogućuje brzo učitavanje i pretraživanje.
+    \item \textbf{Nema potrebe za DBMS:} Ne zahtijeva instalaciju složenih sustava upravljanja bazama podataka.
+    \item \textbf{Portabilnost:} JSON datoteke mogu se lako prenijeti na različite sustave.
+\end{itemize}
+
+\paragraph{Nedostaci JSON baze}
+\begin{itemize}
+    \item \textbf{Skalabilnost:} Za velike količine podataka (npr. tisuće pitanja), JSON može postati neefikasan zbog potrebe za učitavanjem cijele datoteke u memoriju.
+    \item \textbf{Ograničene mogućnosti upita:} JSON ne podržava složene upite poput SQL-a, što ograničava funkcionalnost za napredne analize.
+    \item \textbf{Sigurnost:} Bez dodatnih mjera, JSON datoteke su ranjive na neovlaštene promjene.
+\end{itemize}
+
+\subsection{Upravljanje podacima}
+Trenutno se podaci u qa\_data.json ručno uređuju, ali u budućnosti može se razviti administrativno sučelje za dodavanje i uređivanje pitanja i odgovora. Ovo sučelje moglo bi biti implementirano kao dio web aplikacije, omogućujući administratorima jednostavno upravljanje sadržajem.

@@ -1,0 +1,42 @@
+\section{Semantic routing}
+\subsection{Općenito o Semantic Routingu}
+
+Semantičko usmjeravanje (SR) je pristup planiranju ruta temeljen na učenju, koji obrađuje bogate korisničke upite koji specificiraju različite kriterije i preferencije, nadilazeći ograničenja klasičnih algoritama planiranja ruta. Ono predstavlja kontekstualnu i višeobjektivnu generalizaciju tradicionalnog planiranja ruta. U kontekstu konverzacijske umjetne inteligencije, SR funkcionira kao iznimno brz sloj za donošenje odluka za LLM-ove i AI agente, usmjeravajući zahtjeve na temelju semantičkog značenja, umjesto da se oslanja na spore LLM generacije ili krute sustave temeljene na pravilima.
+
+Temeljni princip semantičkog usmjeravanja je razumijevanje namjere i značenja korisničkog upita. To se postiže pretvaranjem upita u numeričke reprezentacije, poznate kao vektorski ugradci (eng. vector embeddings), koji hvataju semantičko značenje. Značenje se geometrijski prikazuje u visokodimenzionalnom "semantičkom prostoru", gdje su semantički slične točke podataka (upiti, dokumenti, rute) pozicionirane bliže jedna drugoj. Odluke o usmjeravanju donose se usporedbom ugradnje novog zahtjeva s ugradnjama unaprijed definiranih "ruta" ili "namjera". Najbliže podudaranje određuje odgovarajuću akciju ili odgovor. Ovaj pristup omogućuje stvaranje modularnih RAG aplikacija usmjeravanjem upita na različite cjevovode (npr. specifične LLM-ove, vanjske alate, česta pitanja). To pruža granularnu kontrolu nad rukovanjem upitima i pomaže u izbjegavanju odgovora izvan predviđenog opsega.
+
+\subsection{Matematika iza Semantic Routinga}
+Proces semantičkog usmjeravanja započinje transformacijom sirovog ulaznog sadržaja – bilo teksta, slika ili zvuka – u numeričke reprezentacije poznate kao vektorski ugradci. Ovi su ugradci pažljivo izrađeni kako bi uhvatili inherentno semantičko značenje podataka. Zatim se pozicioniraju unutar visokodimenzionalnog "semantičkog prostora", matematičke konstrukcije gdje su točke podataka sa sličnim značenjima geometrijski smještene u neposrednoj blizini. Na primjer, ugradci za "automobil" i "vozilo" bili bi blizu, dok bi "automobil" i "banana" bili udaljeni. Proces konverzije obavljaju specijalizirani modeli neuronskih mreža nazvani **enkoderi** (također poznati kao bi-enkoderi ili modeli ugradnje). Ovi modeli analiziraju značajke i semantička svojstva ulaznog sadržaja i izlaze fiksni vektor, obično sastavljen od stotina ili tisuća brojeva s pomičnim zarezom. Istaknuti primjeri tekstualnih enkodera uključuju Word2Vec, BERT, Sentence-BERT i Universal Sentence Encoder. Za multimodalne ulaze, enkoderi poput CLIPEncoder-a ili VitEncoder-a mogu smjestiti slike u isti semantički prostor kao i tekst, omogućujući usporedbe između različitih modaliteta.
+Nakon što su upiti i unaprijed definirane rute (ili njihovi povezani iskazi/reference) pretvoreni u vektore, njihova se semantička sličnost kvantitativno izračunava. **Kosinusna sličnost** je široko prihvaćena matematička mjera koja kvantificira sličnost između dviju vektora izračunavanjem kosinusa kuta između njih. Rezultirajuća vrijednost kreće se od -1 (što ukazuje na potpuno suprotne smjerove, odnosno savršenu nepodobnost) do 1 (što ukazuje na identične smjerove, odnosno savršenu sličnost), pri čemu 0 predstavlja ortogonalnost (bez sličnosti). U praktičnim primjenama, često se koristi s normaliziranim vektorima, gdje ishod ovisi isključivo o smjeru vektora, a ne o njihovoj veličini. Matematička formula za kosinusnu sličnost za dva vektora $A$ i $B$ definirana je kao:
+
+$$CosineSimilarity(A, B) = \frac{A \cdot B}{||A|| \times ||B||}$$
+
+Gdje je $A \cdot B$ skalarni produkt vektora A i B, a $||A||$ i $||B||$ označavaju euklidske norme (veličine) vektora A i B. Osim kosinusne sličnosti, za izračun sličnosti koriste se i druge matematičke operacije poput euklidske udaljenosti i skalarnog produkta. Kosinusna sličnost je posebno učinkovita kada su vektori unaprijed normalizirani, jer se izračun pojednostavljuje na izravan skalarni produkt.
+
+Sustavi semantičkog usmjeravanja, poput SemanticRoutera tvrtke RedisVL, implementiraju klasifikacijski pristup tipa K-najbližih susjeda (KNN) za donošenje odluka. Sustav radi s unaprijed definiranim objektima `Route`, od kojih svaki sadrži skup `referenci` (primjera iskaza) koji zajedno definiraju semantički opseg ili "površinu" te određene rute. Kada se primi novi korisnički zahtjev, izračunava se njegov vektorski ugradak i zatim se uspoređuje s ugradcima svih unaprijed definiranih referenci rute. Ključni element u ovom procesu donošenja odluka je `prag udaljenosti` (eng. `distance\_threshold`). Svakoj ruti dodjeljuje se jedinstveni `prag udaljenosti` (ili prag sličnosti). Da bi se upit uspješno usmjerio na određenu rutu, semantička udaljenost između ugradka upita i barem jedne reference te rute mora biti manja ili jednaka ovom unaprijed definiranom pragu.[13] Ako se ne pronađe podudaranje unutar praga bilo koje rute (tj. upit nije semantički dovoljno blizu nijednoj ruti), sustav bilježi "promašaj", što ukazuje da nije pronađena prikladna ruta.
+
+\subsection{Prednosti i izazovi}
+\paragraph{Prednosti}
+\begin{itemize}
+    \item Razumijevanje konteksta i varijacija u jeziku.
+    \item Visoka točnost u pronalaženju relevantnih odgovora.
+    \item Fleksibilnost za različite domene i jezike.
+\end{itemize}
+
+\paragraph{Izazovi}
+\begin{itemize}
+    \item Zahtijeva računalne resurse za generiranje embeddinga.
+    \item Ovisnost o vanjskim API-jima (npr. OpenAI).
+    \item Potrebna je dobra kvaliteta podataka u bazi za točne rezultate.
+\end{itemize}
+
+\subsection{Primjena u projektu}
+U Sembotu, Semantic Router koristi OpenAI-jeve embeddinge za generiranje vektorskih reprezentacija korisničkih upita i pitanja iz qa\_data.json. Proces obrade upita sastoji se od sljedećih koraka:
+\begin{itemize}
+\item \textbf{Unos upita:} Korisnik unosi pitanje putem web sučelja (npr. "Koji su uvjeti za upis?").
+\item \textbf{Pretvorba u vektor:} Upit se šalje na OpenAI API, koji vraća vektorsku reprezentaciju ($v_q$).
+\item \textbf{Usporedba s bazom:} Vektor $v_q$ uspoređuje se s vektorima svih pitanja $v_{p_i}$ u bazi podataka koristeći kosinusnu sličnost. U ovom koraku, sustav provjerava je li semantička udaljenost između $v_q$ i barem jedne reference rute manja ili jednaka unaprijed definiranom `pragu udaljenosti` za tu rutu.
+\item \textbf{Odabir odgovora:} Pitanje s najvećom kosinusnom sličnošću koje zadovoljava prag udaljenosti odabire se, a povezani odgovor vraća korisniku. Ako se ne pronađe podudaranje unutar praga bilo koje rute, sustav bilježi "promašaj", što ukazuje da nije pronađena prikladna ruta.
+\end{itemize}
+Proces Semantic Routinga može se vizualizirati kao sljedeći dijagram:
+Korisnički upit -> Pretvorba u vektor -> Usporedba s bazom (uz provjeru praga udaljenosti) -> Odabir odgovora -> Prikaz korisniku
